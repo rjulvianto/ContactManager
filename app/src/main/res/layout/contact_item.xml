@@ -8,12 +8,13 @@
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:id="@+id/imgContactItem"
-        android:layout_marginTop="20dp" />
+        android:layout_marginTop="5dp" />
 
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent">
+        android:layout_height="fill_parent"
+        android:weightSum="1">
 
         <TextView
             android:layout_width="wrap_content"
@@ -22,7 +23,7 @@
             android:text="@string/ContactName"
             android:id="@+id/lblContactName"
             android:layout_marginLeft="15dp"
-            android:layout_marginTop="15dp" />
+            android:layout_marginTop="5dp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -50,6 +51,7 @@
             android:id="@+id/lblContactAddress"
             android:layout_marginTop="5dp"
             android:layout_marginLeft="15dp" />
+
     </LinearLayout>
 
 </LinearLayout>

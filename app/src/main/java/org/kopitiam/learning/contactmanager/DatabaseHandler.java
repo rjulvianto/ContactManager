@@ -1,25 +1,18 @@
 package org.kopitiam.learning.contactmanager;
 
-import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
-import android.database.CharArrayBuffer;
-import android.database.ContentObserver;
 import android.database.Cursor;
-import android.database.DataSetObserver;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
-import android.os.Bundle;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ResourceBundle;
 
 /**
  * Created by rjulvianto on 8/21/2014.
  */
-public class DatabaseHandler extends SQLiteOpenHelper {
+class DatabaseHandler extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 1;
     private static final String DATABASE_NAME = "ContactManager",
                                 TABLE_CONTACTS = "contact",
@@ -30,13 +23,15 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                                 KEY_ADDRESS = "address",
                                 KEY_IMAGE = "imageUri";
 
+    private SQLiteDatabase _db;
+
     public DatabaseHandler(Context context){
         super (context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db){
-        db.execSQL("CREATE TABLE " + TABLE_CONTACTS + " (" + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+        db.execSQL("CREATE TABLE " + TABLE_CONTACTS + " (" + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
                                                            + KEY_NAME + "TEXT, "
                                                             + KEY_PHONE + "TEXT, "
                                                             + KEY_EMAIL + "TEXT, "
@@ -50,109 +45,112 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         onCreate(db);
     }
 
+    public void SetDatabase (SQLiteDatabase db) {
+        _db = db;
+    }
+
     public void CreateContact(Contacts contact)
     {
-        SQLiteDatabase db = null;
+        //SQLiteDatabase db = getWritableDatabase();
 
         try {
-            db = getWritableDatabase();
+            ///db = getWritableDatabase();
             ContentValues val = new ContentValues();
 
             val.put(KEY_NAME, contact.getName());
             val.put(KEY_PHONE, contact.getPhone());
             val.put(KEY_EMAIL, contact.getEmail());
             val.put(KEY_ADDRESS, contact.getAddress());
-            val.put(KEY_IMAGE, contact.getImage().toString());
+            val.put(KEY_IMAGE, String.valueOf(contact.getImage()));
 
-            db.insert(TABLE_CONTACTS, null, val);
+            _db.insert(TABLE_CONTACTS, null, val);
 
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            db.close();
+            //db.close();
         }
     }
 
     public Contacts GetContact(int id){
         Contacts result = null;
 
-        SQLiteDatabase db = null;
+        //SQLiteDatabase db = null;
         Cursor csr = null;
 
         try {
-            db = getReadableDatabase();
-            csr = db.query(TABLE_CONTACTS, new String[]{ KEY_ID, KEY_NAME, KEY_PHONE, KEY_EMAIL, KEY_ADDRESS, KEY_IMAGE}, KEY_ID + "=?",
+            //db = getReadableDatabase();
+            csr = _db.query(TABLE_CONTACTS, new String[]{ KEY_ID, KEY_NAME, KEY_PHONE, KEY_EMAIL, KEY_ADDRESS, KEY_IMAGE}, KEY_ID + "=?",
                                                     new String[]{ String.valueOf(id)}, null, null, null, null);
 
-            if(csr != null){
-                csr.moveToFirst();
-
+            if (csr.moveToFirst()) {
                 result = new Contacts(csr.getInt(0), csr.getString(1), csr.getString(2), csr.getString(3), csr.getString(4), Uri.parse(csr.getString(5)));
             }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             csr.close();
-            db.close();
+            //db.close();
         }
 
         return  result;
     }
 
     public int UpdateContact(int id, Contacts contact){
-        SQLiteDatabase db = null;
+        //SQLiteDatabase db = null;
         int result = 0; //total rows affected in this update action
 
         try {
-            db = getWritableDatabase();
+            //db = getWritableDatabase();
             ContentValues val = new ContentValues();
 
             val.put(KEY_NAME, contact.getName());
             val.put(KEY_PHONE, contact.getPhone());
             val.put(KEY_EMAIL, contact.getEmail());
             val.put(KEY_ADDRESS, contact.getAddress());
-            val.put(KEY_IMAGE, contact.getImage().toString());
+            val.put(KEY_IMAGE, String.valueOf(contact.getImage()));
 
-            result = db.update(TABLE_CONTACTS, val, KEY_ID + "=?", new String[] { String.valueOf(id) });
+            result = _db.update(TABLE_CONTACTS, val, KEY_ID + "=?", new String[] { String.valueOf(id) });
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            db.close();
+            //db.close();
         }
 
         return  result;
     }
 
     public void DeleteContact(int id){
-        SQLiteDatabase db = null;
+        //SQLiteDatabase db = null;
 
         try {
-            db = getWritableDatabase();
-            db.delete(TABLE_CONTACTS, KEY_ID + "=?", new String[] { String.valueOf(id) });
+            //db = getWritableDatabase();
+            _db.delete(TABLE_CONTACTS, KEY_ID + "=?", new String[] { String.valueOf(id) });
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            db.close();
+            //db.close();
         }
     }
 
     public int GetContactsCount(){
         int result = -1;
 
-        SQLiteDatabase db = null;
+        //SQLiteDatabase db = null;
         Cursor csr = null;
 
         try {
-            db = getReadableDatabase();
-            csr = db.rawQuery("SELECT * FROM " + TABLE_CONTACTS, null);
-
-            result = csr.getCount();
+            //db = getReadableDatabase();
+            csr = _db.rawQuery("SELECT * FROM " + TABLE_CONTACTS, null);
+            if (csr.moveToFirst()) {
+                result = csr.getCount();
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             csr.close();
-            db.close();
+            //db.close();
         }
 
         return result;
@@ -160,25 +158,32 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     public List<Contacts> GetAllContacts(){
         List<Contacts> result = null;
-        SQLiteDatabase db = null;
+        //SQLiteDatabase db = null;
         Cursor csr = null;
 
         try {
             result = null;
 
-            db = getReadableDatabase();
-            csr = db.rawQuery("SELECT * FROM " + TABLE_CONTACTS, null );
+            //db = getReadableDatabase();
+            csr = _db.rawQuery("SELECT * FROM " + TABLE_CONTACTS, null );
 
-            if(csr != null)
+            if (csr != null)
             {
                 result = new ArrayList<Contacts>();
-                csr.moveToFirst();
-
-                while(!csr.isLast()){
-                    Contacts item = new Contacts(csr.getInt(0), csr.getString(1), csr.getString(2), csr.getString(3), csr.getString(4), Uri.parse(csr.getString(5)));
-                    result.add(item);
-
-                    csr.moveToNext();
+//                csr.moveToFirst();
+//
+//                while(!csr.isLast()){
+//                    Contacts item = new Contacts(csr.getInt(0), csr.getString(1), csr.getString(2), csr.getString(3), csr.getString(4), Uri.parse(csr.getString(5)));
+//                    result.add(item);
+//
+//                    csr.moveToNext();
+//                }
+                if (csr.moveToFirst()){
+                    do {
+                        result.add(new Contacts(csr.getInt(0), csr.getString(1), csr.getString(2), csr.getString(3), csr.getString(4), Uri.parse(csr.getString(5))))
+                        ;
+                    }
+                    while (csr.moveToNext());
                 }
             }
 
@@ -186,7 +191,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             e.printStackTrace();
         } finally {
             csr.close();
-            db.close();
+            //db.close();
         }
 
         return  result;
@@ -195,12 +200,12 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     public int GetLastContactId(){
         int result = -1;
 
-        SQLiteDatabase db = null;
+        //SQLiteDatabase db = null;
         Cursor csr = null;
 
         try {
-            db = getReadableDatabase();
-            csr = db.rawQuery("SELECT MAX(ID) FROM " + TABLE_CONTACTS, null);
+            //db = getReadableDatabase();
+            csr = _db.rawQuery("SELECT MAX(ID) FROM " + TABLE_CONTACTS, null);
 
             if(csr != null){
                 if(csr.getCount() > 0){
@@ -211,7 +216,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            db.close();
+            //db.close();
             csr.close();
         }
 

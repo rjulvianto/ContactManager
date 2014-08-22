@@ -7,9 +7,9 @@ import android.net.Uri; //notes: use android.net.uri, not java.net.uri
  */
 public class Contacts {
 
-    private String _name, _phone, _email, _address;
-    private Uri _imgUri;
-    private int _id;
+    private final String _name, _phone, _email, _address;
+    private final Uri _imgUri;
+    private final int _id;
 
     public Contacts(int id, String name, String phone, String email, String address, Uri imgURI) {
         _id = id;

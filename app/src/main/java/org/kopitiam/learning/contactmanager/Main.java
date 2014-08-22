@@ -2,6 +2,7 @@ package org.kopitiam.learning.contactmanager;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
@@ -19,26 +20,30 @@ import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
 
 public class Main extends Activity {
 
-    EditText txtName, txtPhone, txtEmail, txtAddress;
-    List<Contacts> _myContacts = new ArrayList<Contacts>();
+    private EditText txtName, txtPhone, txtEmail, txtAddress;
+    private final List<Contacts> _myContacts = new ArrayList<Contacts>();
     ListView lvContact;
     ImageView imgContact;
     Uri imgUri = Uri.parse("android.resource://org.kopitiam.learning.contactmanager/drawable/user.png");
     DatabaseHandler dbHandler;
+    SQLiteDatabase _myDb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //region Init database
         dbHandler = new DatabaseHandler(getApplicationContext());
+        _myDb = dbHandler.getWritableDatabase();
+        dbHandler.SetDatabase(_myDb);
+        //endregion
 
         //region Link layout to Objects
 
@@ -64,7 +69,8 @@ public class Main extends Activity {
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i2, int i3) {
-                btnAdd.setEnabled(!txtName.getText().toString().trim().isEmpty());
+                //note: use String.valueOf(something) instead of .toString()
+                btnAdd.setEnabled(!String.valueOf(txtName.getText()).trim().isEmpty());
             }
 
             @Override
@@ -76,15 +82,16 @@ public class Main extends Activity {
         btnAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Contacts newItem = new Contacts(dbHandler.GetLastContactId() + 1, txtName.getText().toString(), txtPhone.getText().toString(),
-                        txtEmail.getText().toString(), txtAddress.getText().toString(),
+                Contacts newItem = new Contacts(dbHandler.GetLastContactId() + 1, String.valueOf(txtName.getText()), String.valueOf(txtPhone.getText()),
+                        String.valueOf(txtEmail.getText()), String.valueOf(txtAddress.getText()),
                         imgUri);
 
                 dbHandler.CreateContact(newItem);
+
                 _myContacts.add(newItem);
-                populateList();
+                //populateList(); -->this is not needed when we assign adapter to the list view. everytime the list/array content changes, the adapter will change notify view
                 //Toast.makeText(getApplicationContext(),"New Contact is saved.", Toast.LENGTH_SHORT).show();
-                Toast.makeText(getApplicationContext(), txtName.getText().toString() + " has been added to your contact.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), String.valueOf(txtName.getText()) + " has been added to your contact. Total Contact :" + String.valueOf(dbHandler.GetContactsCount()), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -113,10 +120,12 @@ public class Main extends Activity {
         tabhost.addTab(tabView);
         //endregion
 
+        // Assign adapter to list view
+        ArrayAdapter<Contacts> adapter = new ContactListAdapter();
+        lvContact.setAdapter(adapter);
+
         //region Populate Existing Contact from Database
-        _myContacts = dbHandler.GetAllContacts();
-        if(!_myContacts.isEmpty())
-            populateList();
+        _myContacts.addAll(dbHandler.GetAllContacts());
         //endregion
     }
 
@@ -131,10 +140,10 @@ public class Main extends Activity {
         }
     }
 
-    private void populateList(){
-        ArrayAdapter<Contacts> adapter = new ContactListAdapter();
-        lvContact.setAdapter(adapter);
-    }
+//    private void populateList(){
+//        ArrayAdapter<Contacts> adapter = new ContactListAdapter();
+//        lvContact.setAdapter(adapter);
+//    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -149,10 +158,11 @@ public class Main extends Activity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+//        if (id == R.id.action_settings) {
+//            return true;
+//        }
+//        return super.onOptionsItemSelected(item);
+        return id == R.id.action_settings || super.onOptionsItemSelected(item);
     }
 
     private class ContactListAdapter extends ArrayAdapter<Contacts> {
