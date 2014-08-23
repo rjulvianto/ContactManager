@@ -2,15 +2,16 @@ package org.kopitiam.learning.contactmanager;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,22 +29,21 @@ public class Main extends Activity {
 
     private EditText txtName, txtPhone, txtEmail, txtAddress;
     private final List<Contacts> _myContacts = new ArrayList<Contacts>();
+    private final int CONTEXT_CONTACT_EDIT = 0, CONTEXT_CONTACT_DELETE = 1;
+    private final int INTENT_GET_IMAGE = 5001;
     ListView lvContact;
     ImageView imgContact;
     Uri imgUri = Uri.parse("android.resource://org.kopitiam.learning.contactmanager/drawable/user.png");
     DatabaseHandler dbHandler;
-    SQLiteDatabase _myDb;
+
+    ArrayAdapter<Contacts> adapter;
+
+    int longClickItemIndex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        //region Init database
-        dbHandler = new DatabaseHandler(getApplicationContext());
-        _myDb = dbHandler.getWritableDatabase();
-        dbHandler.SetDatabase(_myDb);
-        //endregion
 
         //region Link layout to Objects
 
@@ -59,6 +59,15 @@ public class Main extends Activity {
 
         imgContact = (ImageView) findViewById(R.id.imgContact);
         //endregion
+
+        //region Init database
+        dbHandler = new DatabaseHandler(getApplicationContext());
+        //endregion
+
+        // Assign adapter to list view
+        adapter = new ContactListAdapter();
+        lvContact.setAdapter(adapter);
+
 
         //region Event Listener
         txtName.addTextChangedListener(new TextWatcher() {
@@ -85,10 +94,13 @@ public class Main extends Activity {
                 Contacts newItem = new Contacts(dbHandler.GetLastContactId() + 1, String.valueOf(txtName.getText()), String.valueOf(txtPhone.getText()),
                         String.valueOf(txtEmail.getText()), String.valueOf(txtAddress.getText()),
                         imgUri);
+                if (_myContacts.add(newItem)) {
+                    dbHandler.CreateContact(newItem);
 
-                dbHandler.CreateContact(newItem);
+                    adapter.notifyDataSetChanged();
 
-                _myContacts.add(newItem);
+                }
+
                 //populateList(); -->this is not needed when we assign adapter to the list view. everytime the list/array content changes, the adapter will change notify view
                 //Toast.makeText(getApplicationContext(),"New Contact is saved.", Toast.LENGTH_SHORT).show();
                 Toast.makeText(getApplicationContext(), String.valueOf(txtName.getText()) + " has been added to your contact. Total Contact :" + String.valueOf(dbHandler.GetContactsCount()), Toast.LENGTH_SHORT).show();
@@ -101,7 +113,16 @@ public class Main extends Activity {
                 Intent myIntent = new Intent();
                 myIntent.setType("image/*");
                 myIntent.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(Intent.createChooser(myIntent, "Set Image for selected Contact"), 123498765);
+                startActivityForResult(Intent.createChooser(myIntent, "Set Image for selected Contact"), INTENT_GET_IMAGE);
+            }
+        });
+
+        registerForContextMenu(lvContact);
+        lvContact.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
+                longClickItemIndex = i;
+                return false;
             }
         });
         //endregion
@@ -120,9 +141,6 @@ public class Main extends Activity {
         tabhost.addTab(tabView);
         //endregion
 
-        // Assign adapter to list view
-        ArrayAdapter<Contacts> adapter = new ContactListAdapter();
-        lvContact.setAdapter(adapter);
 
         //region Populate Existing Contact from Database
         _myContacts.addAll(dbHandler.GetAllContacts());
@@ -133,7 +151,7 @@ public class Main extends Activity {
     //the request code is to match the intent starter and the result, since this eventhandler will be called by more than one intent
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(resultCode == RESULT_OK) {
-            if(requestCode == 123498765) {
+            if(requestCode == INTENT_GET_IMAGE) {
                 imgUri = data.getData();
                 imgContact.setImageURI(imgUri);
             }
@@ -163,6 +181,30 @@ public class Main extends Activity {
 //        }
 //        return super.onOptionsItemSelected(item);
         return id == R.id.action_settings || super.onOptionsItemSelected(item);
+    }
+
+    public void onCreateContextMenu(ContextMenu menu, View view, ContextMenu.ContextMenuInfo menuInfo) {
+        super. onCreateContextMenu(menu, view, menuInfo);
+
+        menu.setHeaderIcon(R.drawable.edit);
+        menu.setHeaderTitle("Options");
+        menu.add(Menu.NONE, CONTEXT_CONTACT_EDIT, Menu.NONE, "Edit Contact");
+        menu.add(Menu.NONE, CONTEXT_CONTACT_DELETE, Menu.NONE, "Delete Contact");
+    }
+
+    public boolean onContextItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case CONTEXT_CONTACT_EDIT:
+                // TODO: Implement editing contact
+                break;
+            case CONTEXT_CONTACT_DELETE:
+                dbHandler.DeleteContact(_myContacts.get(longClickItemIndex).getId());
+                _myContacts.remove(longClickItemIndex);
+                adapter.notifyDataSetChanged();
+                break;
+        }
+
+        return super.onContextItemSelected(item);
     }
 
     private class ContactListAdapter extends ArrayAdapter<Contacts> {

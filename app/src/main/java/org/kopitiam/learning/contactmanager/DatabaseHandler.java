@@ -13,7 +13,7 @@ import java.util.List;
  * Created by rjulvianto on 8/21/2014.
  */
 class DatabaseHandler extends SQLiteOpenHelper {
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
     private static final String DATABASE_NAME = "ContactManager",
                                 TABLE_CONTACTS = "contact",
                                 KEY_ID = "id",
@@ -23,8 +23,6 @@ class DatabaseHandler extends SQLiteOpenHelper {
                                 KEY_ADDRESS = "address",
                                 KEY_IMAGE = "imageUri";
 
-    private SQLiteDatabase _db;
-
     public DatabaseHandler(Context context){
         super (context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -32,11 +30,11 @@ class DatabaseHandler extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db){
         db.execSQL("CREATE TABLE " + TABLE_CONTACTS + " (" + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
-                                                           + KEY_NAME + "TEXT, "
-                                                            + KEY_PHONE + "TEXT, "
-                                                            + KEY_EMAIL + "TEXT, "
-                                                            + KEY_ADDRESS + "TEXT, "
-                                                            + KEY_IMAGE + "TEXT);");
+                                                           + KEY_NAME + " TEXT, "
+                                                            + KEY_PHONE + " TEXT, "
+                                                            + KEY_EMAIL + " TEXT, "
+                                                            + KEY_ADDRESS + " TEXT, "
+                                                            + KEY_IMAGE + " TEXT)");
     }
 
     @Override
@@ -45,16 +43,12 @@ class DatabaseHandler extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public void SetDatabase (SQLiteDatabase db) {
-        _db = db;
-    }
-
     public void CreateContact(Contacts contact)
     {
-        //SQLiteDatabase db = getWritableDatabase();
+        SQLiteDatabase db = null;
 
         try {
-            ///db = getWritableDatabase();
+            db = getWritableDatabase();
             ContentValues val = new ContentValues();
 
             val.put(KEY_NAME, contact.getName());
@@ -63,24 +57,24 @@ class DatabaseHandler extends SQLiteOpenHelper {
             val.put(KEY_ADDRESS, contact.getAddress());
             val.put(KEY_IMAGE, String.valueOf(contact.getImage()));
 
-            _db.insert(TABLE_CONTACTS, null, val);
+            db.insert(TABLE_CONTACTS, null, val);
 
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            //db.close();
+            db.close();
         }
     }
 
     public Contacts GetContact(int id){
         Contacts result = null;
 
-        //SQLiteDatabase db = null;
+        SQLiteDatabase db = null;
         Cursor csr = null;
 
         try {
-            //db = getReadableDatabase();
-            csr = _db.query(TABLE_CONTACTS, new String[]{ KEY_ID, KEY_NAME, KEY_PHONE, KEY_EMAIL, KEY_ADDRESS, KEY_IMAGE}, KEY_ID + "=?",
+            db = getReadableDatabase();
+            csr = db.query(TABLE_CONTACTS, new String[]{ KEY_ID, KEY_NAME, KEY_PHONE, KEY_EMAIL, KEY_ADDRESS, KEY_IMAGE}, KEY_ID + "=?",
                                                     new String[]{ String.valueOf(id)}, null, null, null, null);
 
             if (csr.moveToFirst()) {
@@ -90,18 +84,18 @@ class DatabaseHandler extends SQLiteOpenHelper {
             e.printStackTrace();
         } finally {
             csr.close();
-            //db.close();
+            db.close();
         }
 
         return  result;
     }
 
     public int UpdateContact(int id, Contacts contact){
-        //SQLiteDatabase db = null;
+        SQLiteDatabase db = null;
         int result = 0; //total rows affected in this update action
 
         try {
-            //db = getWritableDatabase();
+            db = getWritableDatabase();
             ContentValues val = new ContentValues();
 
             val.put(KEY_NAME, contact.getName());
@@ -110,38 +104,38 @@ class DatabaseHandler extends SQLiteOpenHelper {
             val.put(KEY_ADDRESS, contact.getAddress());
             val.put(KEY_IMAGE, String.valueOf(contact.getImage()));
 
-            result = _db.update(TABLE_CONTACTS, val, KEY_ID + "=?", new String[] { String.valueOf(id) });
+            result = db.update(TABLE_CONTACTS, val, KEY_ID + "=?", new String[] { String.valueOf(id) });
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            //db.close();
+            db.close();
         }
 
         return  result;
     }
 
     public void DeleteContact(int id){
-        //SQLiteDatabase db = null;
+        SQLiteDatabase db = null;
 
         try {
-            //db = getWritableDatabase();
-            _db.delete(TABLE_CONTACTS, KEY_ID + "=?", new String[] { String.valueOf(id) });
+             db = getWritableDatabase();
+             db.delete(TABLE_CONTACTS, KEY_ID + "=?", new String[] { String.valueOf(id) });
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            //db.close();
+            db.close();
         }
     }
 
     public int GetContactsCount(){
         int result = -1;
 
-        //SQLiteDatabase db = null;
+        SQLiteDatabase db = null;
         Cursor csr = null;
 
         try {
-            //db = getReadableDatabase();
-            csr = _db.rawQuery("SELECT * FROM " + TABLE_CONTACTS, null);
+            db = getReadableDatabase();
+            csr = db.rawQuery("SELECT * FROM " + TABLE_CONTACTS, null);
             if (csr.moveToFirst()) {
                 result = csr.getCount();
             }
@@ -150,7 +144,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
             e.printStackTrace();
         } finally {
             csr.close();
-            //db.close();
+            db.close();
         }
 
         return result;
@@ -158,14 +152,14 @@ class DatabaseHandler extends SQLiteOpenHelper {
 
     public List<Contacts> GetAllContacts(){
         List<Contacts> result = null;
-        //SQLiteDatabase db = null;
+        SQLiteDatabase db = null;
         Cursor csr = null;
 
         try {
             result = null;
 
-            //db = getReadableDatabase();
-            csr = _db.rawQuery("SELECT * FROM " + TABLE_CONTACTS, null );
+            db = getReadableDatabase();
+            csr = db.rawQuery("SELECT * FROM " + TABLE_CONTACTS, null );
 
             if (csr != null)
             {
@@ -191,7 +185,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
             e.printStackTrace();
         } finally {
             csr.close();
-            //db.close();
+            db.close();
         }
 
         return  result;
@@ -200,12 +194,12 @@ class DatabaseHandler extends SQLiteOpenHelper {
     public int GetLastContactId(){
         int result = -1;
 
-        //SQLiteDatabase db = null;
+        SQLiteDatabase db = null;
         Cursor csr = null;
 
         try {
-            //db = getReadableDatabase();
-            csr = _db.rawQuery("SELECT MAX(ID) FROM " + TABLE_CONTACTS, null);
+            db = getReadableDatabase();
+            csr = db.rawQuery("SELECT MAX(ID) FROM " + TABLE_CONTACTS, null);
 
             if(csr != null){
                 if(csr.getCount() > 0){
@@ -216,7 +210,7 @@ class DatabaseHandler extends SQLiteOpenHelper {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            //db.close();
+            db.close();
             csr.close();
         }
 

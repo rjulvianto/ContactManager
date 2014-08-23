@@ -27,6 +27,21 @@
                 android:layout_height="fill_parent">
 
                 <LinearLayout
+                    android:id="@+id/tabContacts"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:orientation="vertical">
+
+                    <ListView
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
+                        android:id="@+id/listViewContacts"
+                        android:layout_gravity="center_horizontal"
+                        android:headerDividersEnabled="true"
+                        android:footerDividersEnabled="true" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:id="@+id/tabCreate"
                     android:layout_width="fill_parent"
                     android:layout_height="fill_parent"
@@ -96,30 +111,6 @@
                         android:layout_marginTop="30dp"
                         android:enabled="false" />
 
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/tabContacts"
-                    android:layout_width="fill_parent"
-                    android:layout_height="fill_parent"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?android:attr/textAppearanceLarge"
-                        android:text="@string/txtTabTitleContactView"
-                        android:id="@+id/lblContactViewer"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_marginTop="15dp" />
-
-                    <ListView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/listViewContacts"
-                        android:layout_gravity="center_horizontal"
-                        android:headerDividersEnabled="true"
-                        android:footerDividersEnabled="true" />
                 </LinearLayout>
 
             </FrameLayout>
